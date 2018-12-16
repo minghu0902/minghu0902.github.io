@@ -108,7 +108,7 @@
                 } else {
                     this.getImageData(this.loadText(MAIN_TEXT), function (ctx, shapeCoords) {
                         self.shapeCoords.push(shapeCoords);
-                        firework = new Firework(self.fireworks_ctx, shape, shapeCoords);
+                        firework = new Firework(self.fireworks_ctx, !self.fireworks.length ? 2 : shape, shapeCoords);
                         self.fireworks.push(firework);
                     });
                 }
