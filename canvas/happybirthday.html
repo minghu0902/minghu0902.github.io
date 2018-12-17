@@ -74,20 +74,20 @@
         var Renderer = {
             FIREWORK_INTERVAL_RANGE: { min: 60, max: 240 }, // 生成烟花的时间间隔范围
             METEOR_INTERVAL_RANGE: { min: 60, max: 300 }, // 生成流星的时间间隔范围
-            STAR_RANGE: { min: 20, max: 80 }, // 星星数量范围
+            STAR_RANGE: { min: 50, max: 200 }, // 星星数量范围
             fireworkInterval: 0, // 生成烟花的时间间隔
             meteorInterval: 0, // 生成流行的时间间隔
             fireworks: [], // 保存烟花
             meteors: [],  // 保存流行
             stars: [], // 保存星星
             shapes: [],
-            shapeCoords: [],
+            shapeCoords: [null, null],
             fireworks_ctx: fireworks_ctx,
             starry_sky_ctx: starry_sky_ctx,
             shapes_ctx: shapes_ctx,
 
             init: function () {
-                this.createFireworks();
+                this.initFireworkShapes(this.createFireworks.bind(this));
                 this.setFireworkInterval();
                 this.createMeteors();
                 this.setMeteorInterval();
@@ -96,22 +96,17 @@
                 this.createShapes();
                 this.render();
             },
+            initFireworkShapes: function(cb) {
+                var self = this
+                this.getImageData(this.loadText(MAIN_TEXT), function (ctx, shapeCoords) {
+                    self.shapeCoords.push(shapeCoords);
+                    cb && cb();
+                });
+            },
             createFireworks: function () {
-                var self = this;
-                var shape = ([0, 1, 2][util.random(0, 3)]);
-                var firework;
-                if (this.shapeCoords && this.shapeCoords.length) {
-                    for (var i = 0; i < this.shapeCoords.length; i++) {
-                        firework = new Firework(self.fireworks_ctx, shape, this.shapeCoords[i]);
-                        this.fireworks.push(firework);
-                    }
-                } else {
-                    this.getImageData(this.loadText(MAIN_TEXT), function (ctx, shapeCoords) {
-                        self.shapeCoords.push(shapeCoords);
-                        firework = new Firework(self.fireworks_ctx, !self.fireworks.length ? 2 : shape, shapeCoords);
-                        self.fireworks.push(firework);
-                    });
-                }
+                var index = ([0, 1, 2][util.random(0, 3)]);
+                if(!this.fireworks.length) index = 2;
+                this.fireworks.push(new Firework(this.fireworks_ctx, index, this.shapeCoords[index]));
             },
             createMeteors: function () {
                 this.meteors.push(new Meteor(this.fireworks_ctx));
@@ -221,21 +216,17 @@
                 }, false);
             },
             render: function () {
-                
                 this.starry_sky_ctx.clearRect(0, 0, GLOBAL_WIDTH, GLOBAL_HEIGHT);
                 this.fireworks_ctx.fillStyle = 'rgba(0, 0, 0, .2)';
                 this.fireworks_ctx.fillRect(0, 0, GLOBAL_WIDTH, GLOBAL_HEIGHT);
-                
                 for (var i = 0; i < this.stars.length; i++) {
                     this.stars[i].draw();
                 }
-
                 for (var i = 0; i < this.fireworks.length; i++) {
                     if (!this.fireworks[i].render()) {
                         this.fireworks.splice(i, 1);
                     }
                 }
-
                 for (var i = 0; i < this.meteors.length; i++) {
                     var meteor = this.meteors[i];
                     if (meteor.slide()) {
@@ -244,17 +235,14 @@
                         this.meteors.splice(i, 1);
                     }
                 }
-
                 if (--this.meteorInterval === 0) {
                     this.createMeteors();
                     this.setMeteorInterval();
                 }
-
                 if (--this.fireworkInterval === 0) {
                     this.createFireworks();
                     this.setFireworkInterval();
                 }
-
                 window.requestAnimationFrame(this.render.bind(this));
 
             }
@@ -313,6 +301,8 @@
             this.shape = shape || 0;
             this.shapeCoords = shapeCoords || [];
             this.color = `hsla(${360 * Math.random() | 0},80%,60%,1)`;
+            this.opacity = 1;
+            this.state = 1;
             this.init();
         }
 
@@ -327,13 +317,14 @@
                 var ctx = this.context;
                 this.x = this.shape === 2 ? GLOBAL_WIDTH / 2 : util.random(ctx.canvas.width / 10, ctx.canvas.width * 9 / 10);
                 this.y = ctx.canvas.height;
-                this.maxY = this.shape === 2 ? GLOBAL_HEIGHT / 10 : this.shape === 3 ? GLOBAL_HEIGHT / 2 : util.random(ctx.canvas.height / 10, ctx.canvas.height / 10 * 2);
-                
+                this.maxY = this.shape === 2 ? GLOBAL_HEIGHT / 10 : util.random(ctx.canvas.height / 10, ctx.canvas.height / 10 * 2);
                 this.velocity = this.VOELOCITY;
-                this.opacity = 1;
-                this.state = 1;
                 this.particles = [];
                 this.createParticles();
+            },
+            reset: function() {
+                this.state = 1;
+                this.opacity = 1;
             },
             createParticles: function () {
                 var shapeCoords = this.shapeCoords,
@@ -502,8 +493,8 @@
                 var ctx = this.context;
                 this.x = this.x || util.random(0, ctx.canvas.width);
                 this.y = this.y || util.random(0, ctx.canvas.height);
-                this.r = this.r || util.random(1, 4);
-                this.maxCount = util.random(100, 500);
+                this.r = this.r || util.random(1, 3);
+                this.maxCount = util.random(100, 1000);
                 this.count = this.maxCount;
                 this.theta = 0;
                 this.phi = 0;
