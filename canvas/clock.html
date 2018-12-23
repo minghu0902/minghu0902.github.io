@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>clock</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+        }
+
+        #clock {
+            display: block;
+            margin: 50px auto 0;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="clock"></canvas>
+
+    <script>
+
+        function Clock(radius) {
+            this.canvas = document.getElementById('clock');
+            this.context = this.canvas.getContext('2d');
+            this.radius = radius + 0.5;
+            this.canvas.width = 2 * this.radius;
+            this.canvas.height =  2 * this.radius;
+            this.outerCircleColor = 'white';
+            this.handColor = 'white';
+            this.dialColor = 'rgba(255, 255, 255, $opacity)';
+            this.dialLen = 10;
+            this.init();
+        }
+
+        Clock.prototype = {
+            constructor: Clock,
+
+            init: function () {
+                this.draw();
+                this.render();
+            },
+            draw: function () {
+                this.drawInnerCircle();
+                this.drawDial();
+                this.drawHand('hour');
+                this.drawHand('minute');
+                this.drawHand('second');
+            },
+            drawOuterCircle: function () {
+                var ctx = this.context;
+                ctx.save();
+                ctx.strokeStyle = this.outerCircleColor;
+                ctx.beginPath();
+                ctx.arc(ctx.canvas.width / 2, ctx.canvas.height / 2, this.radius - 0.5, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.stroke();
+            },
+            drawInnerCircle() {
+                var ctx = this.context;
+                ctx.save();
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(ctx.canvas.width / 2, ctx.canvas.height / 2, 10, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            },
+            drawDial: function () {
+                var ctx = this.context,
+                    radius = this.radius,
+                    dialLen = this.dialLen,
+                    angle = 0,
+                    x0 = y0 = x = y = 0,
+                    radian = 0,
+                    lineWidth = 0.5;
+                for (var angle = 0; angle < 360; angle += 6) {
+                    if (angle % 30 === 0) {
+                        dialLen = this.dialLen * 3 / 2;
+                        lineWidth = 3;
+                    } else {
+                        dialLen = this.dialLen;
+                        lineWidth = 2;
+                    }
+                    radian = (Math.PI * angle) / 180;
+                    x0 = (radius - dialLen) * Math.cos(radian) + radius + (ctx.canvas.width / 2 - radius);
+                    y0 = (radius - dialLen) * Math.sin(radian) + radius + (ctx.canvas.height / 2 - radius);
+                    x = radius * Math.cos(radian) + radius + (ctx.canvas.width / 2 - radius);
+                    y = radius * Math.sin(radian) + radius + (ctx.canvas.height / 2 - radius);
+                    ctx.save();
+                    ctx.strokeStyle = this.dialColor.replace('$opacity', 1);
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+                    ctx.lineWidth = lineWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x, y);
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            },
+            drawHand: function (type) {
+                var ctx = this.context,
+                    d = d || new Date(),
+                    hour = d.getHours(),
+                    minutes = d.getMinutes(),
+                    seconds = d.getSeconds(),
+                    radian = 0,
+                    radius = this.radius,
+                    lineWidth = 7,
+                    overflowLenOfHand = 20,
+                    x0 = y0 = x = y = 0;
+                hour = hour >= 12 ? hour - 12 : hour;
+                if (type === 'hour') {
+                    radius = this.radius * .45;
+                    radian = ((((hour * 30 - 90) + 30 * (minutes / 60)) * Math.PI) / 180);
+                } else if (type === 'minute') {
+                    lineWidth = 4;
+                    overflowLenOfHand = 25;
+                    radius = this.radius * .65;
+                    radian = ((((minutes * 6 - 90) + 6 * (seconds / 60)) * Math.PI) / 180);
+                } else if (type === 'second') {
+                    lineWidth = 2;
+                    overflowLenOfHand = 35;
+                    radius = this.radius * .8;
+                    radian = (((seconds * 6 - 90) * Math.PI) / 180);
+                }
+                x0 = radius - overflowLenOfHand * Math.cos(radian) + (ctx.canvas.width / 2 - radius);
+                y0 = radius - overflowLenOfHand * Math.sin(radian) + (ctx.canvas.height / 2 - radius);
+                x = radius + radius * Math.cos(radian) + (ctx.canvas.width / 2 - radius);
+                y = radius + radius * Math.sin(radian) + (ctx.canvas.height / 2 - radius);
+                ctx.save();
+                ctx.strokeStyle = this.handColor;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(x0, y0);
+                ctx.lineTo(x, y);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            },
+            render: function () {
+                var ctx = this.context;
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                this.draw();
+                window.requestAnimationFrame(this.render.bind(this));
+            }
+        }
+
+        var clock = new Clock(250);
+
+    </script>
+</body>
+
+</html>
