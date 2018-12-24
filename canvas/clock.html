@@ -28,12 +28,14 @@
             this.canvas = document.getElementById('clock');
             this.context = this.canvas.getContext('2d');
             this.radius = radius + 0.5;
-            this.canvas.width = 2 * this.radius;
-            this.canvas.height =  2 * this.radius;
+            this.canvas.width = 2 * this.radius + 80;
+            this.canvas.height =  2 * this.radius + 80;
             this.outerCircleColor = 'white';
             this.handColor = 'white';
             this.dialColor = 'rgba(255, 255, 255, $opacity)';
             this.dialLen = 10;
+            this.fontSize = 20;
+            this.fontColor = 'white';
             this.init();
         }
 
@@ -50,6 +52,7 @@
                 this.drawHand('hour');
                 this.drawHand('minute');
                 this.drawHand('second');
+                this.drawNumber();
             },
             drawOuterCircle: function () {
                 var ctx = this.context;
@@ -81,10 +84,10 @@
                 for (var angle = 0; angle < 360; angle += 6) {
                     if (angle % 30 === 0) {
                         dialLen = this.dialLen * 3 / 2;
-                        lineWidth = 3;
+                        lineWidth = 6;
                     } else {
                         dialLen = this.dialLen;
-                        lineWidth = 2;
+                        lineWidth = 3;
                     }
                     radian = (Math.PI * angle) / 180;
                     x0 = (radius - dialLen) * Math.cos(radian) + radius + (ctx.canvas.width / 2 - radius);
@@ -145,6 +148,24 @@
                 ctx.closePath();
                 ctx.stroke();
                 ctx.restore();
+            },
+            drawNumber: function() {
+                var ctx = this.context,
+                    radius = this.radius,
+                    radian = 0,
+                    x = y = 0;
+                for(var time = 1; time <= 12; time++) {
+                    radian = ((time * 30 - 90) * Math.PI) / 180;
+                    x = (radius + 20) * Math.cos(radian) + radius + (ctx.canvas.width / 2 - radius);
+                    y = (radius + 20) * Math.sin(radian) + radius + (ctx.canvas.width / 2 - radius);
+                    ctx.save();
+                    ctx.font = `${this.fontSize}px Microsoft YaHei`;
+                    ctx.fillStyle = this.fontColor;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(time, x, y);
+                    ctx.restore();
+                }
             },
             render: function () {
                 var ctx = this.context;
